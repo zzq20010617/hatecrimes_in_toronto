@@ -1,0 +1,116 @@
+---
+title: "Hate Crimes in the City: Analyzing Trends and Impacts"
+subtitle: ""
+author: 
+  - Ziqi Zhu
+thanks: "Code and data are available at: https://github.com/zzq20010617/hatecrimes_in_toronto.git"
+date: 22 September 2024
+date-format: long
+abstract: "In this paper, Hate Crimes Open Data of Toronto is being discussed. Since Canada is a country of immigrants and Toronto has more and more diversified citizens, the occurrence of hate crimes becomes an unavoidable problem. The following discussion includes several aspects, trends along time, location distribution, and bias-type breakdown of hate crimes in Toronto from 2018-2023, to cast a glance at what targeted community interventions and policy changes can be done to address hate crime hotspots and prevent future occurrence."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+
+time_data <- read_csv(here::here("data/analysis_data/monthly_data.csv"))
+location_data <- read_csv(here::here("data/analysis_data/location_data.csv"))
+type_data <- read_csv(here::here("data/analysis_data/bias_type_data.csv"))
+```
+
+# Introduction
+
+We use @talia, and @opendatatorotno to discover some relation bwtween time and number of marriage in Toronto, here is some of my findings.
+
+# Data {#sec-data}
+
+Our data comes from open data Toronto.
+
+```{r}
+#| label: fig-marriage
+#| fig-cap: Bills of penguins
+#| echo: false
+
+ggplot(time_data, aes(x = year_month, y = total_occurrences)) +
+  geom_line() +
+  labs(title = "Hate crimes reported Over Time",
+       x = "Date",
+       y = "Number of Hate Crimes Reported") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+time_data |> 
+  ggplot(aes(x = year_month, y = total_occurrences)) +
+  geom_point()
+```
+
+```{r}
+#| label: fig-marriage
+#| fig-cap: Bills of penguins
+#| echo: false
+location_data <- location_data %>%
+  mutate(percentage = (total_occurrences / sum(total_occurrences)) * 100,
+         label = paste0(total_occurrences, " (", round(percentage, 0), "%)"))
+
+ggplot(location_data, aes(x = reorder(LOCATION_TYPE, total_occurrences), 
+                            y = total_occurrences)) +
+  geom_bar(stat = "identity", fill = "grey30") +
+  geom_text(aes(label = label), 
+            hjust = -0.1, 
+            color = "red", 
+            size = 3) +
+  coord_flip() +
+  labs(title = "Number of occurrences by type of location",
+       x = "Type of location", 
+       y = "Number of occurrences") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#| label: fig-marriage
+#| fig-cap: Bills of penguins
+#| echo: false
+
+data_long <- type_data %>%
+  pivot_longer(cols = -OCCURRENCE_YEAR, 
+               names_to = "bias_type", 
+               values_to = "count")
+
+ggplot(data_long, aes(x = as.factor(OCCURRENCE_YEAR), y = count, fill = bias_type)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Bias Type Occurrences by Year",
+       x = "Year", 
+       y = "Number of Occurrences",
+       fill = "Bias Type") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+# Discussion
+
+## First discussion point {#sec-first-point}
+
+We can find from the graph that the number of marriage follow some same patterns for different regions like a wave, but after 2020, the number is unstable like previous years, there's a grow in general for most civic center, ET civic center is missing from the dataset since 2021.
+
+## Second discussion point
+
+An intresting point is the marriage number tends to be higher in some months, like summer and fall instead of some other months
+
+\newpage
+
+\appendix
+
+# Appendix {.unnumbered}
+
+# Additional data details
+
+# References
