@@ -28,89 +28,127 @@ type_data <- read_csv(here::here("data/analysis_data/bias_type_data.csv"))
 
 # Introduction
 
-We use @talia, and @opendatatorotno to discover some relation bwtween time and number of marriage in Toronto, here is some of my findings.
+Hate crimes represent a serious threat to societal cohesion and individual safety, driven by prejudice against characteristics such as race, religion, ethnicity, gender, and other identity markers. These crimes not only inflict harm on their immediate victims but also foster fear and division within entire communities. Understanding the dynamics of hate crimes is crucial for developing effective interventions and policies aimed at reducing their prevalence.
+
+According to the deputy police chief of Toronto, the number of incidents determined to be hate-motivated in 2024 has increased by 55% compared to the same period in 2023. The conflict in the Middle East that began on October 2023, is considered a contributing factor according to a reporter from the Toronto Star.
+
+In this paper, we use data from Open Data Toronto (@opendatatoronto) that records hate crimes reported in Toronto from 2018 to 2023 to look at how hate crimes increased over time and discuss what factors may cause the change. Also, we will compare what type of area has a higher potential for hate crimes so that law enforcement and policymakers can allocate resources more effectively and prioritize community engagement in high-risk areas. Finally, the paper delves into the breakdown of bias types involved in hate crimes, analyzing the prevalence of various forms of prejudice, mainly on race, religion, and ethnicity bias. This analysis seeks to uncover which biases are most frequently targeted.
+
 
 # Data {#sec-data}
 
-Our data comes from open data Toronto.
+## Data Tools
 
+The R programming language (@talia) were used to simulate and test the dataset comes from Open Data Toronto (@opendatatoronto). Then tidyverse (@tidyverse), dplyr(@dplyr), and ggplot2（@ggplot2） were used for processing the data and generate plots for this paper.
+
+## Overview
+The “Hate Crimes Open Data” data set is provided to Open Data Toronto (Gelfand 2022)
+by Toronto Police (Policy, Planning, Finance & Administration 2024). The data set
+contains 1,350 observations that each entry is a reported hate crime in Toronto from the year 2018. The original variables include detailed information like when and where the hate crime happened and was reported, as well as which type the crime is counted and if an arrest was made. 
+
+The variables we choose for this dataset include the year and month of ‘OCCURRENCE_DATE’ to count occurrences in a month, all the hate crime type variables like ‘RELIGION_BIAS’, and ‘LOCATION_TYPE’ which record the place the hate crime happened. The results can be find in below section @sec-result
+
+## Result {#sec-result}
 ```{r}
-#| label: fig-marriage
-#| fig-cap: Bills of penguins
+#| label: fig-time
+#| fig-cap: Monthly Number of Hate Crimes in Toronto from 2018 to 2023
 #| echo: false
+#| fig-pos: "H"
 
 ggplot(time_data, aes(x = year_month, y = total_occurrences)) +
   geom_line() +
-  labs(title = "Hate crimes reported Over Time",
-       x = "Date",
+  labs(x = "Date",
        y = "Number of Hate Crimes Reported") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-time_data |> 
-  ggplot(aes(x = year_month, y = total_occurrences)) +
-  geom_point()
 ```
+@fig-time suggests the number of hate crimes appears to have an upward trend over the years. Starting from 2018, when monthly hate crimes were relatively low (often under 15 incidents), the number gradually increased, especially from 2020 onwards. Take a closer look, the number shows regular fluctuations with frequent rises and falls, suggesting there may be a seasonal pattern influencing these numbers. There are also some notable peaks between 2020 and 2023 which may correspond to certain events.
+
 
 ```{r}
-#| label: fig-marriage
-#| fig-cap: Bills of penguins
+#| label: fig-location
+#| fig-cap: Hate Crime Incidents by Location Type in Toronto from 2018 to 2023
 #| echo: false
+#| fig-pos: "H"
 location_data <- location_data %>%
+  filter(!is.na(LOCATION_TYPE)) %>%
+  mutate(LOCATION_TYPE = str_wrap(LOCATION_TYPE, width = 40)) %>% 
   mutate(percentage = (total_occurrences / sum(total_occurrences)) * 100,
          label = paste0(total_occurrences, " (", round(percentage, 0), "%)"))
 
 ggplot(location_data, aes(x = reorder(LOCATION_TYPE, total_occurrences), 
                             y = total_occurrences)) +
-  geom_bar(stat = "identity", fill = "grey30") +
+  geom_bar(stat = "identity", fill = "grey30", width = 0.6) +
   geom_text(aes(label = label), 
-            hjust = -0.1, 
+            hjust = ifelse(location_data$LOCATION_TYPE == "Streets/Roadways/Highway", 1.1, -0.05), 
             color = "red", 
             size = 3) +
   coord_flip() +
-  labs(title = "Number of occurrences by type of location",
-       x = "Type of location", 
+  labs(x = "Type of location", 
        y = "Number of occurrences") +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(10, 10, 10, 20),
+        axis.text.y = element_text(size = 8))
 ```
+@fig-location illustrates that streets have a higher chance of hate crime incidents (approximately 22%) This was followed by education institutions (approximately 16%), apartment and public transport have similar rates (approximately 12%), commercial places and open areas each takes 9% of incidents. Other places like houses and religious places appear to have lower chances. Note that some incidents (37 cases) that has no location type record were ignored from the plot, and the percentages do not add up to 100% because they were rounded to the nearest integer.
+
 
 ```{r}
-#| label: fig-marriage
-#| fig-cap: Bills of penguins
+#| label: fig-type
+#| fig-cap: Distribution of Hate Crime Types in Toronto from 2018 to 2023
 #| echo: false
+#| fig-pos: "H"
 
 data_long <- type_data %>%
   pivot_longer(cols = -OCCURRENCE_YEAR, 
                names_to = "bias_type", 
                values_to = "count")
 
+data_long <- data_long %>% 
+    mutate(bias_type = recode(bias_type,
+                            "AGE_BIAS" = "Age Bias",
+                            "MENTAL_OR_PHYSICAL_DISABILITY" = "Disability Bias",
+                            "RACE_BIAS" = "Race Bias",
+                            "ETHNICITY_BIAS" = "Ethnicity Bias",
+                            "LANGUAGE_BIAS" = "Language Bias",
+                            "RELIGION_BIAS" = "Religion Bias",
+                            "SEXUAL_ORIENTATION_BIAS" = "Sexual Orientation Bias",
+                            "GENDER_BIAS" = "Gender Bias"))
+
 ggplot(data_long, aes(x = as.factor(OCCURRENCE_YEAR), y = count, fill = bias_type)) +
   geom_bar(stat = "identity") +
-  labs(title = "Bias Type Occurrences by Year",
-       x = "Year", 
+  labs(x = "Year", 
        y = "Number of Occurrences",
        fill = "Bias Type") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 ```
+@fig-type shows that Race Bias (blue) and Religion Bias (purple) appear to be the dominant bias types throughout most of the years and takes more than half of total occurrences. Sexual Orientation Bias (pink) and Ethnicity Bias(dark green) also seems to be consistently present across all years, with an increase in 2023 but not as much as two previous bias type. Other types like Gender has fewer cases, while Language, Age, and Disability Bias only has several or no cases reported in each year. Note that if an incidents relate to multiple bias, it is counted in both types.
 
 # Discussion
 
 ## First discussion point {#sec-first-point}
 
-We can find from the graph that the number of marriage follow some same patterns for different regions like a wave, but after 2020, the number is unstable like previous years, there's a grow in general for most civic center, ET civic center is missing from the dataset since 2021.
+In section @sec-result, an upward trend of hate crimes reported in Toronto is observed, suggesting that hate crimes remain a growing issue. The data indicates that more hate crimes are being reported now compared to 2018, which could reflect both an increase in incidents or improved awareness and reporting mechanisms. There are some sharp peaks, particularly around 2020 and 2023, where the number of hate crimes reported reaches around 30-40 incidents per month, which is notably higher than earlier periods.
+
+A factor that cause the increase in 2020 was belief to be outbreaks of COVID-19, it leads to an increases social tensions or prejudice specifically against Asian/Chinese and South Asian/Indian communities, because the false allegations the virus was unleashed by China according to @report1. This effect continues to 2021, in the report published by Toronto Police, out Of the 29 hate occurrences trargeting the East and Southeast Asian community, four suspects expressed blame on China for the COVID-19 pandemic(@tps_hate_crime_report_2021). While in 2023 the last peak on graph is believe to be associated with the conflict in Middle-East, according to the deputy chief of Toronto Police, since the start of the Israel-Hamas war on October 2023, antisemitism takes 45% of 221 alleged hate crimes for year 2024(@report2). These event Indicates that during the general trends of increasing of number of incidents reported, the most significant rises seem to coincide with global or national events and the general increase in social tensions.
+
 
 ## Second discussion point
 
-An intresting point is the marriage number tends to be higher in some months, like summer and fall instead of some other months
+One unexpected observation from @fig-location is that educational institutions rank as the second most common location for hate crimes, accounting for 16% of total incidents. While it's understandable that public places like streets and public transportation would have a higher likelihood of hate crimes, it’s surprising that institutions of higher learning, where students typically have higher levels of education, would not exhibit lower instances of such behavior.
+
+Several factors may explain this trend. First, the diverse environments of universities, where students from different races, ethnicities, religions, and backgrounds converge, can sometimes lead to tensions, misunderstandings, and prejudices that students may not have encountered previously. Furthermore, universities promote freedom of speech, which, while essential, can also be exploited as a platform for hate speech or the expression of extreme viewpoints.
+
+According to an article from @report3, the increase in hate crimes at schools can also be attributed to external events, such as the ongoing conflict in Gaza. The number of hate-motivated incidents at educational institutions surged from 248 in 2022 to 365 in 2023, reaching a 10-year high. This reflects that educational institutions are not immune to societal issues. In fact, their diversity, intellectual freedom, and predominantly youthful demographic can make them especially vulnerable to such incidents.
+
+## Weaknesses and next steps
+
+As shown in @fig-type, Religion Bias and Race Bias account for the majority of total incidents. The next step in our analysis would be to take a closer look at these two bias types, identifying which specific religions or races are most frequently targeted. Additionally, we can investigate potential reasons behind the prevalence of these biases, exploring socio-political, cultural, or historical factors that may contribute to these patterns of hate.
+
+
 
 \newpage
-
-\appendix
-
-# Appendix {.unnumbered}
-
-# Additional data details
 
 # References

@@ -7,14 +7,9 @@
 # Pre-requisites: None
 
 #### Workspace setup ####
-library(tidyverse)
-library(dplyr)
-library(lubridate)
 
 #### Clean data ####
 raw_data <- read_csv("data/raw_data/raw_data.csv")
-
-data$OCCURRENCE_DATE <- as.Date(data$OCCURRENCE_DATE, format="%Y-%m-%d")
 
 # Extract year and month from the OCCURRENCE_DATE column
 data <- raw_data %>%
@@ -38,7 +33,7 @@ bias_columns <- c("AGE_BIAS", "MENTAL_OR_PHYSICAL_DISABILITY", "RACE_BIAS",
 
 # Create a new column for counting each bias, replacing 'None' with NA for easier processing
 data_bias <- data %>%
-  mutate(across(all_of(bias_columns), ~ ifelse(. %in% c("None"), NA, .)))
+  mutate(across(all_of(bias_columns), ~ ifelse(. %in% c("None", "NO"), NA, .)))
 
 # Count the number of occurrences of each bias type of different years
 bias_counts <- data_bias %>%

@@ -8,8 +8,6 @@
 
 
 #### Workspace setup ####
-library(tidyverse)
-library(ggplot2)
 
 #### Simulate data ####
 
@@ -33,13 +31,6 @@ simulated_data <- data.frame(
   Month = format(dates, "%Y-%m"),  # Extract year-month for easier reading
   HateCrimes = hate_crimes
 )
-
-ggplot(simulated_data, aes(x = as.Date(paste(Month, "01", sep = "-")), y = HateCrimes)) +
-  geom_line(color = "blue") +
-  labs(title = "Simulated Number of Hate Crimes per Month (2018-2023)",
-       x = "Month",
-       y = "Number of Hate Crimes") +
-  theme_minimal()
 
 #write csv
 write.csv(simulated_data, "data/raw_data/simulated.csv", row.names = FALSE)
