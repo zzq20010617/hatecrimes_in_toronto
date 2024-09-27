@@ -91,7 +91,7 @@ ggplot(location_data, aes(x = reorder(LOCATION_TYPE, total_occurrences),
         plot.margin = margin(10, 10, 10, 20),
         axis.text.y = element_text(size = 8))
 ```
-@fig-location illustrates that streets have a higher chance of hate crime incidents (approximately 22%) This was followed by education institutions (approximately 16%), apartment and public transport have similar rates (approximately 12%), commercial places and open areas each takes 9% of incidents. Other places like houses and religious places appear to have lower chances. Note that some incidents (37 cases) that has no location type record were ignored from the plot, and the percentages do not add up to 100% because they were rounded to the nearest integer.
+@fig-location illustrates that streets have a higher chance of hate crime incidents (approximately 22%) This was followed by education institutions (approximately 16%), apartment and public transport have similar rates (approximately 12%), commercial places and open areas each takes 9% of incidents. Other places like houses and religious places appear to have lower chances. Note that some incidents (37 cases) that has no location type recorded were ignored from the plot, and the percentages do not add up to 100% because they were rounded to the nearest integer.
 
 
 ```{r}
